@@ -1,0 +1,29 @@
+{% extends "layout.html" %} {% block content %}
+<div class="jumbotron">
+  <div class="bs-component">
+    <h1 class="display-4 mt-4">Modify Colors</h1>
+      <hr class="my-4">
+      <div class="container">
+        <form action="" method="post">
+          <fieldset>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group row">
+              <h5><label class="col col-form-label" for="color_type">Color Type</label></h5> <div class="col">{{ form.style(class="col col-form-label", value=current_style) }}</div>
+              {% for error in form.style.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            <div class="form-group row" id="number_colors">
+              <h5><label class="col col-form-label" for="color_type">Number of Colors (if applicable)</label></h5> <div class="col">{{ form.numcolors(class="col col-form-label", value=current_num) }}</div>
+              {% for error in form.numcolors.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            </div>
+            <div class="d-flex justify-content-around">
+              <p> {{ form.color1(value=current_c1) }} Pick a color here 1</p>
+              <p> {{ form.color2(value=current_c2) }} Pick a color here 2</p>
+              <p> {{ form.color3(value=current_c3) }} Pick a color here 3</p>
+            </div>
+          {{ form.submit( class="btn btn-primary btn-sm btn-block")}}
+          </fieldset>
+      </div>
+  </div>
+</div>
+{% endblock %}

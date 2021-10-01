@@ -5,7 +5,7 @@
 from subprocess import check_output
 import datetime
 import os
-from flask_mail import Mail, Message
+import socket
 import pytz
 from flask_pyoidc.flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
@@ -13,12 +13,12 @@ from flask import Flask, render_template, send_from_directory, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
+from config import PI_IP
 
 # Setting up Flask and csrf token for forms.
 app = Flask(__name__)
 csrf = CSRFProtect(app)
 csrf.init_app(app)
-
 # Get app config from absolute file path
 if os.path.exists(os.path.join(os.getcwd(), "config.py")):
     app.config.from_pyfile(os.path.join(os.getcwd(), "config.py"))
@@ -43,12 +43,15 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Pi notifying socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 # Commit
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from lights.models import User, Seat
-#from rides.forms import EventForm, CarForm
+from light.models import User, Seat
+from light.forms import ColorForm
 from .utils import csh_user_auth
 
 # time setup for the server side time
@@ -72,7 +75,6 @@ def demo(auth_dict=None):
 
 # LOG IN MANAGEMENT
 @app.route('/login')
-@app.route('/')
 def login(auth_dict=None):
     return redirect(url_for('csh_auth'))
 
@@ -97,17 +99,23 @@ def _logout():
 @auth.oidc_auth('default')
 @csh_user_auth
 def csh_auth(auth_dict=None):
+    print("b")
     if auth_dict is None:
-        return redirect(url_for('login'))
+        return redirect(app.config["SERVER_NAME"]+"/csh-auth")
     q = User.query.get(auth_dict['uid'])
     if q is not None:
+        print("c")
+        q.firstname = auth_dict['first']
+        q.lastname = auth_dict['last']
+        q.picture = auth_dict['picture']
         g.user = q # pylint: disable=assigning-non-slot
     else:
-        user = User(auth_dict['uid'], "SOLID", "7700ff",
+        print("d")
+        user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'], "SOLID", "#B0197E",
             None, None, None, None)
         g.user = user # pylint: disable=assigning-non-slot
         db.session.add(user)
-
+    print("e")
     db.session.commit()
     login_user(g.user)
     return redirect(url_for('index'))
@@ -118,3 +126,34 @@ def csh_auth(auth_dict=None):
 @login_required
 def index():
     return render_template('index.html')
+
+def update_pi():
+    s.connect((app.config['PI_IP'], app.config['PI_PORT']))
+    s.send("UPDATE".encode())
+    s.close()
+
+@app.route("/colorform", methods=['GET', 'POST'])
+@login_required
+def edit_colors():
+    form = ColorForm()
+    if form.validate_on_submit():
+        current_user.style = form.style.data
+        current_user.numcolors = form.numcolors.data
+        current_user.color1 = form.color1.data
+        current_user.color2 = form.color2.data
+        current_user.color3 = form.color3.data
+        seats = Seat.query.filter(Seat.user == current_user.id).all()
+        if seats:
+            seat = seats[0]
+            seat.style = form.style.data
+            seat.numcolors = form.numcolors.data
+            seat.color1 = form.color1.data
+            seat.color2 = form.color2.data
+            seat.color3 = form.color3.data
+            db.session.add(seat)
+        db.session.add(current_user)
+        db.session.commit()
+        if seats:
+            update_pi()
+        return redirect(url_for('index'))
+    return render_template('colorform.html', form=form, current_style=current_user.style, current_num=current_user.numcolors, current_c1=current_user.color1, current_c2=current_user.color2, current_c3=current_user.color3)
