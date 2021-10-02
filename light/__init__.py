@@ -13,7 +13,6 @@ from flask import Flask, render_template, send_from_directory, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
-from config import PI_IP
 
 # Setting up Flask and csrf token for forms.
 app = Flask(__name__)
@@ -64,20 +63,6 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/assets'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-# Demo page, not neded for use
-@app.route('/demo')
-def demo(auth_dict=None):
-    # Get current EST time.
-    loc_dt = datetime.datetime.now(tz=eastern)
-    st = loc_dt.strftime(fmt)
-    return render_template('demo.html', timestamp=st, datetime=datetime, auth_dict=auth_dict)
-
-
-# LOG IN MANAGEMENT
-@app.route('/login')
-def login(auth_dict=None):
-    return redirect(url_for('csh_auth'))
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -125,12 +110,48 @@ def csh_auth(auth_dict=None):
 @app.route('/home')
 @login_required
 def index():
-    return render_template('index.html')
+    seats = Seat.query.all()
+    seat_users = []
+    for seat in seats:
+        seat_users.append( seat.user )
+    return render_template('index.html', users = seat_users )
 
-def update_pi():
+
+def update_pi( num ):
     s.connect((app.config['PI_IP'], app.config['PI_PORT']))
-    s.send("UPDATE".encode())
+    msg = "UPDATE" + num
+    s.send(msg.encode())
     s.close()
+
+
+@app.route("/claim/<position>", methods=['GET', 'POST'])
+@login_required
+def claim_seat(position):
+    seat = Seat.query.get( int(position) )
+    seat.user = current_user.id
+    seat.style = current_user.style
+    seat.numcolors = current_user.numcolors      
+    seat.color1 = current_user.color1
+    seat.color2 = current_user.color2
+    seat.color3 = current_user.color3
+    db.session.commit()
+    update_pi( position )
+    return redirect(url_for('index'))
+
+
+@app.route("/leave/<position>", methods=['GET', 'POST'])
+@login_required
+def claim_seat(position):
+    seat = Seat.query.get( int(position) )
+    seat.user = None
+    seat.style = None
+    seat.numcolors = None   
+    seat.color1 = None
+    seat.color2 = None
+    seat.color3 = None
+    db.session.commit()
+    update_pi( position )
+    return redirect(url_for('index'))
 
 @app.route("/colorform", methods=['GET', 'POST'])
 @login_required
@@ -142,18 +163,15 @@ def edit_colors():
         current_user.color1 = form.color1.data
         current_user.color2 = form.color2.data
         current_user.color3 = form.color3.data
-        seats = Seat.query.filter(Seat.user == current_user.id).all()
-        if seats:
-            seat = seats[0]
+        seat = Seat.query.filter(Seat.user == current_user.id).first()
+        if seat:
             seat.style = form.style.data
             seat.numcolors = form.numcolors.data
             seat.color1 = form.color1.data
             seat.color2 = form.color2.data
             seat.color3 = form.color3.data
-            db.session.add(seat)
-        db.session.add(current_user)
         db.session.commit()
-        if seats:
-            update_pi()
+        if seat:
+            update_pi( str(seat.id) )
         return redirect(url_for('index'))
     return render_template('colorform.html', form=form, current_style=current_user.style, current_num=current_user.numcolors, current_c1=current_user.color1, current_c2=current_user.color2, current_c3=current_user.color3)

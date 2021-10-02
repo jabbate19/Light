@@ -49,7 +49,7 @@ class User(db.Model):
 
 
 class Seat(db.Model):
-    __tablename__ = 'events'
+    __tablename__ = 'seat'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user = db.Column(db.String, db.ForeignKey('user.id'), nullable=True)
