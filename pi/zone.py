@@ -5,29 +5,37 @@ class Zone:
     color1 = None
     color2 = None
     color3 = None
+    storage_color1 = None
+    storage_color2 = None
+    storage_color3 = None
     numcolors = None
-    r = 255
-    g = 0
-    b = 0
+    rainbow_r = 255
+    rainbow_g = 0
+    rainbow_b = 0
     pasttime = 0
     pos = 0
     
     def reset( self, style, color1, color2, color3, numcolors ):
+        # Can this replace all of below?
+        #self = Zone( self.pixels, style, color1, color2, color3, numcolors )
         self.style = style
-        self.color1 = color1
-        self.color2 = color2
-        self.color3 = color3
+        self.color1 = self.hex_to_rgb(color1)
+        self.color2 = self.hex_to_rgb(color2)
+        self.color3 = self.hex_to_rgb(color3)
+        self.storage_color1 = self.color1
+        self.storage_color2 = self.color2
+        self.storage_color3 = self.color3
         self.numcolors = numcolors
-        self.r = 255
-        self.g = 0
-        self.b = 0
+        self.rainbow_r = 255
+        self.rainbow_g = 0
+        self.rainbow_b = 0
         self.pasttime = 0
         self.pos = 0
 
-    def circular_breathing( time ):
+    def circular_breathing( self, time ):
         return ( 1.0 - abs(2 * ( time / 3 ) - 1.0 ) ** 2 ) ** 0.5
     
-    def hex_to_rgb( hex ):
+    def hex_to_rgb( self, hex ):
         if hex:
             hex = hex.lstrip('#')
             return tuple( int( hex[i:i+2], 16 ) for i in ( 0, 2, 4 ) )
@@ -39,11 +47,13 @@ class Zone:
         self.color1 = self.hex_to_rgb(color1)
         self.color2 = self.hex_to_rgb(color2)
         self.color3 = self.hex_to_rgb(color3)
+        self.storage_color1 = self.color1
+        self.storage_color2 = self.color2
+        self.storage_color3 = self.color3
         self.numcolors = numcolors
     
     def process_colors( self, time ):
         if self.style:
-            self.tick += 1
             if self.style == "SOLID":
                 self.solid()
             elif self.style == "PULSE":
@@ -53,78 +63,86 @@ class Zone:
             elif self.style == "RANIBOW":
                 self.rainbow()
         else:
-            for pixel in self.pixels:
-                pixel = (0,0,0)
-                pixel.brightness = 0
+            self.pixels.fill( (0,0,0) )
+            self.pixels.show()
 
     def solid( self ):
         if self.numcolors == 1:
-            for pixel in self.pixels:
-                pixel = self.color1
-                pixel.brightness = 1
+            for i in range(len(self.pixels)):
+                self.pixels[i] = self.color1
         elif self.numcolors == 2:
             for i in range( len( self.pixels ) ):
-                pixel = self.pixels[i]
                 if i % 2:
-                    pixel = self.color1
+                    self.pixels[i] = self.color1
                 else:
-                    pixel = self.color2
-                pixel.brightness = 1
+                    self.pixels[i] = self.color2
         elif self.numcolors == 3:
             for i in range( len( self.pixels ) ):
-                pixel = self.pixels[i]
                 if i % 3 == 2:
-                    pixel = self.color1
+                    self.pixels[i] = self.color1
                 elif i % 3 == 1:
-                    pixel = self.color2
+                    self.pixels[i] = self.color2
                 else:
-                    pixel = self.color3
-                pixel.brightness = 1
+                    self.pixels[i] = self.color3
+        self.pixels.show()
     
     def pulse( self, time ):
+        brightness = self.circular_breathing(time)
+        self.color1 = self.storage_color1 * brightness
+        self.color2 = self.storage_color2 * brightness
+        self.color3 = self.storage_color3 * brightness
         self.solid()
-        for pixel in self.pixels:
-            pixel.brightness = self.circular_breathing(time)
     
     def line( self, t ):
         diff = t - self.pasttime
         if diff >= 0.2:
             self.pos += 1
-            if self.pos == 4:
-                self.pos = 1
-            self.pasttime = t
-        if self.pos == 1:
-            c1 = self.color1
-            c2 = self.color2
-            c3 = self.color3
-        elif self.pos == 2:
-            c1 = self.color3
-            c2 = self.color1
-            c3 = self.color2
-        elif self.pos == 3:
-            c1 = self.color2
-            c2 = self.color3
-            c3 = self.color1
-        for i in range( len( self.pixels ) ):
-            pixel = self.pixels[i]
-            if i % 3 == 2:
-                pixel = c1
-            elif i % 3 == 1:
-                pixel = c2
+            if self.numcolors <= 2:
+                if self.pos == 3:
+                    self.pos = 1
             else:
-                pixel = c3
-            pixel.brightness = 1
+                if self.pos == 4:
+                    self.pos = 1
+            self.pasttime = t
+        if self.numcolors == 3:
+            if self.pos == 1:
+                self.color1 = self.storage_color1
+                self.color2 = self.storage_color2
+                self.color3 = self.storage_color3
+            elif self.pos == 2:
+                self.color1 = self.storage_color3
+                self.color2 = self.storage_color1
+                self.color3 = self.storage_color2
+            elif self.pos == 3:
+                self.color1 = self.storage_color2
+                self.color2 = self.storage_color3
+                self.color3 = self.storage_color1
+        elif self.numcolors == 2:
+            if self.pos % 2:
+                self.color1 = self.storage_color1
+                self.color2 = self.storage_color2
+            else:
+                self.color1 = self.storage_color2
+                self.color2 = self.storage_color1
+        else:
+            if self.pos % 2:
+                self.color1 = self.storage_color1
+                self.color2 = ( 0, 0, 0 )
+            else:
+                self.color1 = ( 0, 0, 0 )
+                self.color2 = self.storage_color1
+        self.pixels.show()
 
     def rainbow( self ):
-        if self.r > 0 and self.b == 0:
-            self.r -= 1
-            self.g += 1
-        if self.g > 0 and self.r == 0:
-            self.g -= 1
-            self.b += 1
-        if self.b > 0 and self.g == 0:
-            self.r += 1
-            self.b -= 1
-        for pixel in self.pixels:
-            pixel = ( self.r, self.g, self.b )
-            pixel.brightness = 1
+        if self.rainbow_r > 0 and self.rainbow_b == 0:
+            self.rainbow_r -= 1
+            self.rainbow_g += 1
+        if self.rainbow_g > 0 and self.rainbow_r == 0:
+            self.rainbow_g -= 1
+            self.rainbow_b += 1
+        if self.rainbow_b > 0 and self.rainbow_g == 0:
+            self.rainbow_r += 1
+            self.rainbow_b -= 1
+        for i in range(len(self.pixels)):
+            self.pixels[i] = ( self.rainbow_r, self.rainbow_g, self.rainbow_b )
+        self.pixels.show()

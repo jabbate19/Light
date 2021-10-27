@@ -4,7 +4,8 @@ import socket
 import time
 import mysql.connector
 import os
-from pi.seat import Seat
+from zone import Zone
+import config
 
 s = socket.socket()
 s.bind(('',4444))
@@ -14,10 +15,10 @@ s.settimeout(0)
 num_leds = 60
 
 mydb = mysql.connector.connect(
-  host="129.21.124.24",
-  user="jabbate",
-  password="####",
-  database="LightTable"
+  host = config.DB_IP,
+  user = config.DB_USERNAME,
+  password = config.DB_PASSWORD,
+  database = config.DB_DATABASE
 )
 mycursor = mydb.cursor()
 
