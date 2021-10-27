@@ -1,5 +1,5 @@
 #import neopixel
-class Seat:
+class Zone:
     pixels = None
     style = None
     color1 = None
