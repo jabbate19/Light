@@ -1,5 +1,5 @@
-#import board
-#import neopixel
+import board
+import neopixel
 import socket
 import time
 import mysql.connector
@@ -21,8 +21,8 @@ mydb = mysql.connector.connect(
 )
 mycursor = mydb.cursor()
 
-#pixels = neopixel.NeoPixel(board.D18, 60)
-pixels = [ "PIXEL " + i for i in range( 1, num_leds+1 ) ]
+pixels = neopixel.NeoPixel(board.D18, 60)
+#pixels = [ "PIXEL " + i for i in range( 1, num_leds+1 ) ]
 
 # Function that prints
 # the required sequence
@@ -82,7 +82,7 @@ def main():
       c, addr = s.accept()
       msg = c.recv(1024).decode()
       c.close()
-    except:
+    except TimeoutError:
       msg = "N/A"
     # Update detection
     if "UPDATE" in msg:

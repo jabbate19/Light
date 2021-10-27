@@ -42,9 +42,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Pi notifying socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 # Commit
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
@@ -84,23 +81,19 @@ def _logout():
 @auth.oidc_auth('default')
 @csh_user_auth
 def csh_auth(auth_dict=None):
-    print("b")
     if auth_dict is None:
         return redirect(app.config["SERVER_NAME"]+"/csh-auth")
     q = User.query.get(auth_dict['uid'])
     if q is not None:
-        print("c")
         q.firstname = auth_dict['first']
         q.lastname = auth_dict['last']
         q.picture = auth_dict['picture']
         g.user = q # pylint: disable=assigning-non-slot
     else:
-        print("d")
         user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'], "SOLID", "#B0197E",
             None, None, None, None)
         g.user = user # pylint: disable=assigning-non-slot
         db.session.add(user)
-    print("e")
     db.session.commit()
     login_user(g.user)
     return redirect(url_for('index'))
@@ -114,19 +107,26 @@ def index():
     seat_users = []
     for seat in seats:
         seat_users.append( seat.user )
-    return render_template('index.html', users = seat_users )
+    return render_template('index.html', users = seat_users, num_seats = len(seat_users) )
 
 
 def update_pi( num ):
-    s.connect((app.config['PI_IP'], app.config['PI_PORT']))
-    msg = "UPDATE" + num
-    s.send(msg.encode())
-    s.close()
+    # Pi notifying socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1)
+    try:
+        s.connect(('127.0.0.1', 4444))
+        msg = "UPDATE" + num
+        s.send(msg.encode())
+        s.close()
+    except Exception as e:
+        print("Other:", e)
+        s.close()
 
 
 @app.route("/claim/<position>", methods=['GET', 'POST'])
 @login_required
-def claim_seat(position):
+def claim(position):
     seat = Seat.query.get( int(position) )
     seat.user = current_user.id
     seat.style = current_user.style
@@ -141,7 +141,7 @@ def claim_seat(position):
 
 @app.route("/leave/<position>", methods=['GET', 'POST'])
 @login_required
-def claim_seat(position):
+def leave(position):
     seat = Seat.query.get( int(position) )
     seat.user = None
     seat.style = None
