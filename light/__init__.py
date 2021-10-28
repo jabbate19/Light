@@ -135,7 +135,7 @@ def edit_room( room_id ):
         db.session.commit()
         update_pi( room.pi_ip )
         return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=room.style, current_num=str(room.numcolors), current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
+    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
 
 # All below is for the table project, a future addition
 @app.route('/seats')
@@ -198,4 +198,4 @@ def edit_colors():
         if seat:
             update_pi( str(seat.id) )
         return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=current_user.style, current_num=str(current_user.numcolors), current_c1=current_user.color1, current_c2=current_user.color2, current_c3=current_user.color3)
+    return render_template('colorform.html', form=form, current_style=current_user.style, current_c1=current_user.color1, current_c2=current_user.color2, current_c3=current_user.color3)

@@ -108,7 +108,6 @@ class Zone:
         elif style == "RAINBOW SPARKLE":
             self._rainbow_sparkle = RainbowSparkle(pixels, speed=0.1, num_sparkles=15)
         
-    
     def process_colors( self ):
         if self._animation:
             self._animation.animate()
