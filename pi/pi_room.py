@@ -53,7 +53,7 @@ def main():
       room_data = getSQLData()[room_id]
       print(room_data)
       room.reset( room_data[1], room_data[2], room_data[3], room_data[4], room_data[5] )
-    room.process_colors( time.time() )
+    room.process_colors( )
     pixels.show()
     time.sleep(0.05)
 

@@ -21,11 +21,8 @@ class Zone:
     def reset( self, style, color1, color2, color3, numcolors ):
         self.__init__( self.pixels, style, color1, color2, color3, numcolors, self.start, self.end )
 
-    def breathing( self ):
-        self.pos += 1
-        if self.pos >= 200:
-            self.pos = 0
-        return ( 1.0 - ( abs(2 * ( self.pos / 200 ) - 1.0 ) ) )
+    def circular_breathing( self, time ):
+        return ( 1.0 - abs(2 * ( time / 3 ) - 1.0 ) ** 2 ) ** 0.5
     
     def hex_to_rgb( self, hex ):
         if hex:
@@ -56,25 +53,22 @@ class Zone:
         self.loop = 1
         
     
-    def process_colors( self ):
+    def process_colors( self, time ):
         if self.style:
             if self.style == "SOLID":
                 self.solid()
-            elif self.style == "PULSE ALT":
-                self.pulse_alt()
-            elif self.style == "PULSE FADE":
-                self.pulse_fade()
+            elif self.style == "PULSE":
+                self.pulse( time )
             elif self.style == "LINE":
                 self.line()
-            elif self.style == "RAINBOW":
+            elif self.style == "RANIBOW":
                 self.rainbow()
-            elif self.style == "CHASE":
-                self.chase()
         else:
             self.pixels.fill( (0,0,0) )
             #self.pixels.show()
 
     def solid( self ):
+        print(self.start, self.end)
         if self.numcolors == 1:
             for i in range( self.start, self.end ):
                 self.pixels[i] = self.color1
@@ -94,68 +88,43 @@ class Zone:
                     self.pixels[i] = self.color3
         #self.pixels.show()
     
-    def scalar_color( self, color, scalar ):
-        return ( color[0] * scalar, color[1] * scalar, color[2] * scalar )
-
-    def pulse_alt( self ):
-        brightness = self.breathing()
-        self.color1 = self.scalar_color( self.storage_color1, brightness )
-        self.color2 = self.scalar_color( self.storage_color2, brightness )
-        self.color3 = self.scalar_color( self.storage_color3, brightness )
-        self.solid()
-
-    def pulse_fade( self ):
-        brightness = self.breathing()
-        if brightness == 0:
-            self.loop += 1
-        if self.loop > self.numcolors:
-            self.loop = 1
-        if self.loop == 1:
-            self.color1 = self.scalar_color( self.storage_color1, brightness )
-            self.color2 = self.scalar_color( self.storage_color1, brightness )
-            self.color3 = self.scalar_color( self.storage_color1, brightness )
-        elif self.loop == 2:
-            self.color1 = self.scalar_color( self.storage_color2, brightness )
-            self.color2 = self.scalar_color( self.storage_color2, brightness )
-            self.color3 = self.scalar_color( self.storage_color2, brightness )
-        else:
-            self.color1 = self.scalar_color( self.storage_color3, brightness )
-            self.color2 = self.scalar_color( self.storage_color3, brightness )
-            self.color3 = self.scalar_color( self.storage_color3, brightness )
+    def pulse( self, time ):
+        brightness = self.circular_breathing(time)
+        self.color1 = self.storage_color1 * brightness
+        self.color2 = self.storage_color2 * brightness
+        self.color3 = self.storage_color3 * brightness
         self.solid()
     
     def line( self ):
         self.pos += 1
-        if not self.pos % 5:
-            self.loop += 1
         if self.numcolors <= 2:
-            if self.loop == 3:
-                self.loop = 1
+            if self.pos == 3:
+                self.pos = 1
         else:
-            if self.loop == 4:
-                self.loop = 1
+            if self.pos == 4:
+                self.pos = 1
         if self.numcolors == 3:
-            if self.loop == 1:
+            if self.pos == 1:
                 self.color1 = self.storage_color1
                 self.color2 = self.storage_color2
                 self.color3 = self.storage_color3
-            elif self.loop == 2:
+            elif self.pos == 2:
                 self.color1 = self.storage_color3
                 self.color2 = self.storage_color1
                 self.color3 = self.storage_color2
-            elif self.loop == 3:
+            elif self.pos == 3:
                 self.color1 = self.storage_color2
                 self.color2 = self.storage_color3
                 self.color3 = self.storage_color1
         elif self.numcolors == 2:
-            if self.loop % 2:
+            if self.pos % 2:
                 self.color1 = self.storage_color1
                 self.color2 = self.storage_color2
             else:
                 self.color1 = self.storage_color2
                 self.color2 = self.storage_color1
         else:
-            if self.loop % 2:
+            if self.pos % 2:
                 self.color1 = self.storage_color1
                 self.color2 = ( 0, 0, 0 )
             else:
@@ -163,22 +132,16 @@ class Zone:
                 self.color2 = self.storage_color1
         self.solid()
 
-    def clamp( self, value ):
-        return max(0 , min( value, 255 ) )
-
     def rainbow( self ):
         if self.rainbow_r > 0 and self.rainbow_b == 0:
-            self.rainbow_r -= 3
-            self.rainbow_g += 3
+            self.rainbow_r -= 1
+            self.rainbow_g += 1
         if self.rainbow_g > 0 and self.rainbow_r == 0:
-            self.rainbow_g -= 3
-            self.rainbow_b += 3
+            self.rainbow_g -= 1
+            self.rainbow_b += 1
         if self.rainbow_b > 0 and self.rainbow_g == 0:
-            self.rainbow_r += 3
-            self.rainbow_b -= 3
-        self.rainbow_r = self.clamp( self.rainbow_r )
-        self.rainbow_g = self.clamp( self.rainbow_g )
-        self.rainbow_b = self.clamp( self.rainbow_b )
+            self.rainbow_r += 1
+            self.rainbow_b -= 1
         for i in range( self.start, self.end ):
             self.pixels[i] = ( self.rainbow_r, self.rainbow_g, self.rainbow_b )
         #self.pixels.show()
@@ -201,13 +164,8 @@ class Zone:
                     self.pixels[i] = self.color3
             except IndexError:
                 if self.loop == 1:
-                    if self.numcolors == 1:
-                        self.pixels[60-i] = self.color1
-                    else:
-                        self.pixels[60-i] = self.color2
+                    self.pixels[60-i] = self.color2
                 elif self.loop == 2:
-                    if self.numcolors <= 2:
-                        self.pixels[60-i] = self.color1
                     self.pixels[60-i] = self.color3
                 elif self.loop == 3:
                     self.pixels[60-i] = self.color1
