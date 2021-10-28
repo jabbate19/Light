@@ -23,7 +23,6 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 
 pixels = neopixel.NeoPixel(board.D18, 60)
-#pixels = [ "PIXEL " + i for i in range( 1, num_leds+1 ) ]
 
 # Function that prints
 # the required sequence

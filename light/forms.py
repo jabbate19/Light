@@ -11,9 +11,11 @@ class ColorForm(FlaskForm):
     style = SelectField(u'RGB Style', 
         choices=[
             ("SOLID", "Solid"),
-            ("PULSE", "Pulse"),
+            ("PULSE ALT", "Pulse (Alternating)"),
+            ("PULSE FADE", "Pulse (Fade Between)"),
             ("LINE", "Moving Line"),
-            ("RAINBOW", "Full Color Cycle")
+            ("RAINBOW", "Full Color Cycle"),
+            ("CHASE", "Chase")
         ], 
         validators=[DataRequired()]
     )

@@ -1,7 +1,6 @@
 ####################################
 # File name: models.py             #
-# Author: Ayush Goel & Fred Rybin  #
-# Contributors: Joe Abbate         #
+# Author: Joe Abbate               #
 ####################################
 from light import db
 
