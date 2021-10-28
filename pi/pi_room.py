@@ -26,7 +26,7 @@ mycursor = mydb.cursor()
 
 pixels = neopixel.NeoPixel(board.D18, num_leds, auto_write = False)
 
-room = Zone( pixels, "SOLID", "#000000", "#000000", "#000000", 1 )
+room = Zone( pixels, "SOLID", "#000000", "#000000", "#000000" )
 
 def getSQLData():
   mydb.commit()
@@ -36,7 +36,7 @@ def getSQLData():
 def main():
   # Init
   room_data = getSQLData()[room_id]
-  room.reset( room_data[1], room_data[2], room_data[3], room_data[4], room_data[5] )
+  room.reset( room_data[1], room_data[2], room_data[3], room_data[4] )
   # Listen for updates and run lights
   while True:
     # Try and find new message, otherwise continue
@@ -49,13 +49,10 @@ def main():
     except socket.error:
       msg = "N/A"
     # Update detection
-    if msg == "UPDATE":
+    if msg == "UPDATE" and addr == config.SERVER_IP:
       room_data = getSQLData()[room_id]
-      print(room_data)
-      room.reset( room_data[1], room_data[2], room_data[3], room_data[4], room_data[5] )
-    room.process_colors( )
-    time.sleep(0.05)
-    # Only if using zone1
-    #pixels.show()
+      room.reset( room_data[1], room_data[2], room_data[3], room_data[4] )
+    room.process_colors()
+    
 if __name__ == "__main__":
   main()

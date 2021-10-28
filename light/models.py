@@ -56,14 +56,12 @@ class Seat(db.Model):
     color1 = db.Column(db.String, nullable=True)
     color2 = db.Column(db.String, nullable=True)
     color3 = db.Column(db.String, nullable=True)
-    numcolors = db.Column(db.Integer, nullable=True)
 
-    def __init__(self, style, color1, color2, color3, numcolors):
+    def __init__( self, style, color1, color2, color3 ):
         self.type = style
         self.color1 = color1
         self.color2 = color2
         self.color3 = color3
-        self.numcolors = numcolors
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -76,7 +74,6 @@ class Room(db.Model):
     color1 = db.Column(db.String, nullable=True)
     color2 = db.Column(db.String, nullable=True)
     color3 = db.Column(db.String, nullable=True)
-    numcolors = db.Column(db.Integer, nullable=True)
     last_modify_user = db.Column(db.String, nullable=True)
     last_modify_time = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=True)

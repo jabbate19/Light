@@ -74,7 +74,6 @@ def _logout():
     logout_user()
     return redirect("/", 302)
 
-
 @app.route('/csh-auth')
 @app.route('/')
 @auth.oidc_auth('default')
@@ -97,24 +96,12 @@ def csh_auth(auth_dict=None):
     login_user(g.user)
     return redirect(url_for('index'))
 
-
-# Application
-@app.route('/seats')
-@login_required
-def seats():
-    seats = Seat.query.all()
-    seat_users = []
-    for seat in seats:
-        seat_users.append( seat.user )
-    return render_template('seats.html', users = seat_users, num_seats = len(seat_users) )
-
 # Application
 @app.route('/home')
 @login_required
 def index():
     rooms = Room.query.all()
     return render_template('index.html', rooms = rooms )
-
 
 def update_pi( ip ):
     # Pi notifying socket
@@ -128,6 +115,37 @@ def update_pi( ip ):
     except Exception as e:
         print("Pi Send Error:", e)
         s.close()
+
+@app.route("/room/<room_id>", methods=['GET', 'POST'])
+@login_required
+def edit_room( room_id ):
+    form = ColorForm()
+    room = Room.query.get( room_id )
+    if form.validate_on_submit():
+        numcolors = form.numcolors.data
+        style = form.style.data
+        if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
+            style += numcolors
+        room.style = style
+        room.color1 = form.color1.data
+        room.color2 = form.color2.data
+        room.color3 = form.color3.data
+        room.last_modify_user = current_user.id
+        room.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        db.session.commit()
+        update_pi( room.pi_ip )
+        return redirect(url_for('index'))
+    return render_template('colorform.html', form=form, current_style=room.style, current_num=str(room.numcolors), current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
+
+# All below is for the table project, a future addition
+@app.route('/seats')
+@login_required
+def seats():
+    seats = Seat.query.all()
+    seat_users = []
+    for seat in seats:
+        seat_users.append( seat.user )
+    return render_template('seats.html', users = seat_users, num_seats = len(seat_users) )
 
 
 @app.route("/claim/<position>", methods=['GET', 'POST'])
@@ -158,24 +176,6 @@ def leave(position):
     db.session.commit()
     update_pi( position )
     return redirect(url_for('index'))
-
-@app.route("/room/<room_id>", methods=['GET', 'POST'])
-@login_required
-def edit_room( room_id ):
-    form = ColorForm()
-    room = Room.query.get( room_id )
-    if form.validate_on_submit():
-        room.style = form.style.data
-        room.numcolors = form.numcolors.data
-        room.color1 = form.color1.data
-        room.color2 = form.color2.data
-        room.color3 = form.color3.data
-        room.last_modify_user = current_user.id
-        room.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
-        db.session.commit()
-        update_pi( room.pi_ip )
-        return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=room.style, current_num=str(room.numcolors), current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
 
 @app.route("/colorform", methods=['GET', 'POST'])
 @login_required
