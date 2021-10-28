@@ -68,3 +68,20 @@ class Seat(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
+
+class Room(db.Model):
+    __tablename__ = 'room'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    style = db.Column(db.String, nullable=True)
+    color1 = db.Column(db.String, nullable=True)
+    color2 = db.Column(db.String, nullable=True)
+    color3 = db.Column(db.String, nullable=True)
+    numcolors = db.Column(db.Integer, nullable=True)
+    last_modify_user = db.Column(db.String, nullable=True)
+    last_modify_time = db.Column(db.String, nullable=True)
+    name = db.Column(db.String, nullable=True)
+    pi_ip = db.Column(db.String, nullable=True)
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)

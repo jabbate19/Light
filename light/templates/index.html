@@ -1,19 +1,22 @@
 {% extends "layout.html" %} {% block content %}
 <div class="jumbotron">
-    <div class="bs-component">    
-        {% for seat_num in range( num_seats ) %}
-        <div class="form-group row">
-            <h5>Seat #{{seat_num + 1}}</h5>
-            {% if current_user.id == users[seat_num] %}
-            <a class="btn btn-danger btn-sm" href="/leave/{{seat_num + 1}}" id="leave::{{seat_num + 1}}"
-                type="button">Leave Seat</a>
-            {% endif %}
-            {% if not current_user.id in users %}
-            <a class="btn btn-primary btn-sm" href="/claim/{{seat_num + 1}}" id="claim::{{seat_num + 1}}"
-                type="button">Claim Seat</a>
-            {% endif %}
-        </div>
+    <div class="bs-component">
+        <div class="container">
+        {% for room in rooms %}
+            <div class="row">
+                <div class="col-sm">
+                    <h5>{{room.name}}</h5>
+                </div>
+                <div class="col-sm">
+                    <a class="btn btn-primary btn-sm" href="/room/{{room.id}}" id="room::{{room.id}}"
+                    type="button">Modify</a>
+                </div>
+                <div class="col-sm">
+                    <h5>Last Modified by: {{room.last_modify_user}} at {{room.last_modify_time}}</h5>
+                </div>
+            </div>
         {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

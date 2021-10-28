@@ -13,6 +13,7 @@ from flask import Flask, render_template, send_from_directory, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
+import time
 
 # Setting up Flask and csrf token for forms.
 app = Flask(__name__)
@@ -46,7 +47,7 @@ login_manager.login_view = 'login'
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from light.models import User, Seat
+from light.models import User, Seat, Room
 from light.forms import ColorForm
 from .utils import csh_user_auth
 
@@ -60,14 +61,12 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/assets'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-
 @login_manager.user_loader
 def load_user(user_id):
     q = User.query.get(user_id)
     if q:
         return q
     return None
-
 
 @app.route("/logout")
 @auth.oidc_logout
@@ -77,6 +76,7 @@ def _logout():
 
 
 @app.route('/csh-auth')
+@app.route('/login')
 @app.route('/')
 @auth.oidc_auth('default')
 @csh_user_auth
@@ -100,27 +100,34 @@ def csh_auth(auth_dict=None):
 
 
 # Application
-@app.route('/home')
+@app.route('/seats')
 @login_required
-def index():
+def seats():
     seats = Seat.query.all()
     seat_users = []
     for seat in seats:
         seat_users.append( seat.user )
-    return render_template('index.html', users = seat_users, num_seats = len(seat_users) )
+    return render_template('seats.html', users = seat_users, num_seats = len(seat_users) )
+
+# Application
+@app.route('/home')
+@login_required
+def index():
+    rooms = Room.query.all()
+    return render_template('index.html', rooms = rooms )
 
 
-def update_pi( num ):
+def update_pi( ip ):
     # Pi notifying socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
-        s.connect(('127.0.0.1', 4444))
-        msg = "UPDATE" + num
+        s.connect((ip, 4444))
+        msg = "UPDATE"
         s.send(msg.encode())
         s.close()
     except Exception as e:
-        print("Other:", e)
+        print("Pi Send Error:", e)
         s.close()
 
 
@@ -152,6 +159,24 @@ def leave(position):
     db.session.commit()
     update_pi( position )
     return redirect(url_for('index'))
+
+@app.route("/room/<room_id>", methods=['GET', 'POST'])
+@login_required
+def edit_room( room_id ):
+    form = ColorForm()
+    room = Room.query.get( room_id )
+    if form.validate_on_submit():
+        room.style = form.style.data
+        room.numcolors = form.numcolors.data
+        room.color1 = form.color1.data
+        room.color2 = form.color2.data
+        room.color3 = form.color3.data
+        room.last_modify_user = current_user.id
+        room.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        db.session.commit()
+        update_pi( room.pi_ip )
+        return redirect(url_for('index'))
+    return render_template('colorform.html', form=form, current_style=room.style, current_num=room.numcolors, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
 
 @app.route("/colorform", methods=['GET', 'POST'])
 @login_required

@@ -10,3 +10,4 @@ Flask-pyoidc
 pytz
 Flask-login
 psycopg2-binary
+pymysql
