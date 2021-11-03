@@ -48,6 +48,18 @@ commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').r
 
 devices = []
 
+ServerSocket = socket.socket()
+host = '127.0.0.1'
+port = 1233
+ThreadCount = 0
+try:
+    ServerSocket.bind((host, port))
+except socket.error as e:
+    print(str(e))
+
+print('Waitiing for a Connection..')
+ServerSocket.listen(5)
+
 # pylint: disable=wrong-import-position
 from light.models import User, Seat, Room
 from light.forms import ColorForm
