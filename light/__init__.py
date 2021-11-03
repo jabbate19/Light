@@ -9,7 +9,7 @@ import socket
 import pytz
 from flask_pyoidc.flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
-from flask import Flask, render_template, send_from_directory, redirect, url_for, g
+from flask import Flask, render_template, send_from_directory, redirect, url_for, g, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
@@ -45,6 +45,8 @@ login_manager.login_view = 'login'
 
 # Commit
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
+
+devices = []
 
 # pylint: disable=wrong-import-position
 from light.models import User, Seat, Room
@@ -101,7 +103,8 @@ def csh_auth(auth_dict=None):
 @login_required
 def index():
     rooms = Room.query.all()
-    return render_template('index.html', rooms = rooms )
+    print( devices )
+    return render_template('index.html', rooms = devices, num_rooms = len(devices) )
 
 def update_pi( ip ):
     # Pi notifying socket
@@ -120,22 +123,40 @@ def update_pi( ip ):
 @login_required
 def edit_room( room_id ):
     form = ColorForm()
-    room = Room.query.get( room_id )
+    room = devices[int(room_id)]
     if form.validate_on_submit():
         numcolors = form.numcolors.data
         style = form.style.data
         if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
             style += numcolors
-        room.style = style
-        room.color1 = form.color1.data
-        room.color2 = form.color2.data
-        room.color3 = form.color3.data
-        room.last_modify_user = current_user.id
-        room.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        room['style'] = style
+        room['color1'] = form.color1.data
+        room['color2'] = form.color2.data
+        room['color3'] = form.color3.data
+        room['last_modify_user'] = current_user.id
+        room['last_modify_time'] = time.strftime("%H:%M:%S", time.localtime() )
         db.session.commit()
-        update_pi( room.pi_ip )
+        update_pi( room['ip'] )
         return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
+    return render_template('colorform.html', form=form, current_style=room['style'], current_c1=room['color1'], current_c2=room['color2'], current_c3=room['color3'])
+
+@app.route('/add-device/<name>', methods=['GET'])
+def add_device( name ):
+    devices.append( 
+        {
+            'name' : name,
+            'ip' : request.remote_addr,
+            'style' : 'SOLID',
+            'color1' : '#000000',
+            'color2' : '#000000',
+            'color3' : '#000000',
+            'last_modify_user' : 'N/A',
+            'last_modify_time' : '00:00:00'
+        }
+    )
+    resp = jsonify(success=True)
+    resp.status_code = 200
+    return resp
 
 # All below is for the table project, a future addition
 @app.route('/seats')
