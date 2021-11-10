@@ -12,7 +12,6 @@ class ColorForm(FlaskForm):
         choices=[
             ("SOLID", "Solid"),
             ("BLINK", "Blink"),
-            ("COLOR CYCLE", "Color Cycle"),
             ("CHASE", "Chase"),
             ("COMET", "Comet"),
             ("PULSE", "Pulse"),
@@ -21,7 +20,8 @@ class ColorForm(FlaskForm):
             ("RAINBOW", "Rainbow"),
             ("RAINBOW CHASE", "Rainbow Chase"),
             ("RAINBOW COMET", "Rainbow Comet"),
-            ("RAINBOW SPARKLE", "Rainbow Sparkle")
+            ("RAINBOW SPARKLE", "Rainbow Sparkle"),
+            ("INTRUDER", "Intruder Alert (EPILEPSY WARNING!)")
         ], 
         validators=[DataRequired()]
     )
