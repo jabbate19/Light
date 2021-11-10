@@ -49,8 +49,9 @@ def main():
     except socket.error:
       msg = "N/A"
     # Update detection
-    if msg == "UPDATE" and addr == config.SERVER_IP:
+    if msg == "UPDATE" and addr[0] == config.SERVER_IP:
       room_data = getSQLData()[room_id]
+      print(room_data)
       room.reset( room_data[1], room_data[2], room_data[3], room_data[4] )
     room.process_colors()
     

@@ -1,3 +1,4 @@
 mysql-connector-python
 rpi_ws281x
 adafruit-circuitpython-neopixel
+adafruit-circuitpython-led-animation
