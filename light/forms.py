@@ -21,7 +21,8 @@ class ColorForm(FlaskForm):
             ("RAINBOW CHASE", "Rainbow Chase"),
             ("RAINBOW COMET", "Rainbow Comet"),
             ("RAINBOW SPARKLE", "Rainbow Sparkle"),
-            ("INTRUDER", "Intruder Alert (EPILEPSY WARNING!)")
+            ("INTRUDER", "Intruder Alert (EPILEPSY WARNING!)"),
+            ("OFF", "Off")
         ], 
         validators=[DataRequired()]
     )
