@@ -52,7 +52,7 @@ from light.forms import ColorForm
 from .utils import csh_user_auth
 
 # time setup for the server side time
-eastern = pytz.timezone('US/Eastern')
+eastern = pytz.timezone('America/New_York')
 fmt = '%Y-%m-%d %H:%M'
 
 # Favicon
@@ -147,7 +147,6 @@ def seats():
         seat_users.append( seat.user )
     return render_template('seats.html', users = seat_users, num_seats = len(seat_users) )
 
-
 @app.route("/claim/<position>", methods=['GET', 'POST'])
 @login_required
 def claim(position):
@@ -161,7 +160,6 @@ def claim(position):
     db.session.commit()
     update_pi( position )
     return redirect(url_for('index'))
-
 
 @app.route("/leave/<position>", methods=['GET', 'POST'])
 @login_required
