@@ -9,5 +9,4 @@ COPY . /app/
 
 run python -m flask db upgrade; exit 0
 
-ENTRYPOINT ["gunicorn", "light:app"]
-CMD ["--bind=0.0.0.0:8080"]
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0", "--port=8080"]
