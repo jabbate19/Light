@@ -12,3 +12,4 @@ pytz==2018.3
 Flask-login
 psycopg2-binary
 pymysql
+wtforms
