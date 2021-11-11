@@ -113,5 +113,5 @@ class Zone:
         else:
             self.pixels.fill( (0,0,0) )
             self.pixels.show()
-        
+
             
