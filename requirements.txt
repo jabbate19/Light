@@ -3,7 +3,7 @@ Flask==1.0
 Flask-Migrate==2.1.1
 Flask-Script==2.0.6
 Flask-SQLAlchemy>=2.5.0
-Flask-WTF==0.14.3
+Flask-WTF==1.0.0
 Flask-SocketIO
 pylint==1.8.3
 SQLAlchemy>=1.3.0
@@ -12,3 +12,7 @@ pytz==2018.3
 Flask-login
 psycopg2-binary
 pymysql
+wtforms==2.3.3
+gunicorn
+gevent==21.8.0
+gevent-websocket==0.10.1

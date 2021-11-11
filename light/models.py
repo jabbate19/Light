@@ -12,7 +12,7 @@ class User(db.Model):
     lastname = db.Column(db.String, nullable=False)
     picture = db.Column(db.String, nullable=False)
 
-    def __init__(self, uid, firstname, lastname, picture, style, color1, color2, color3, numcolors):
+    def __init__(self, uid, firstname, lastname, picture):
         self.id = uid
         self.firstname = firstname
         self.lastname = lastname

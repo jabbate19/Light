@@ -3,7 +3,7 @@
 # Author: Joe Abbate               #
 ####################################
 from subprocess import check_output
-import datetime
+from datetime import datetime
 import os
 import socket
 import pytz
@@ -16,7 +16,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
 import time
-from light.Client import Client
+
 
 
 # Setting up Flask and csrf token for forms.
@@ -31,7 +31,7 @@ else:
 
 # Establish SQL Database
 db = SQLAlchemy(app)
-migrate = Migrate(app)
+migrate = Migrate(app, db)
 socketio = SocketIO(app)
 
 # OIDC Authentication
@@ -53,9 +53,10 @@ login_manager.login_view = 'login'
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from light.models import User, Room
-from light.forms import ColorForm
+from .models import User, Room
+from .forms import ColorForm
 from .utils import csh_user_auth
+from .client import Client
 
 # time setup for the server side time
 eastern = pytz.timezone('America/New_York')
@@ -96,8 +97,7 @@ def csh_auth(auth_dict=None):
         q.picture = auth_dict['picture']
         g.user = q # pylint: disable=assigning-non-slot
     else:
-        user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'], "SOLID", "#B0197E",
-            None, None, None, None)
+        user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'])
         g.user = user # pylint: disable=assigning-non-slot
         db.session.add(user)
     db.session.commit()
@@ -111,35 +111,38 @@ def index():
     global clients
     return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
 
-def update_pi( ip, cmd ):
-    # Pi notifying socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(1)
-    try:
-        s.connect((ip, 4444))
-        msg = cmd
-        s.send(msg.encode())
-        s.close()
-    except Exception as e:
-        print("Pi Send Error:", e)
-        s.close()
-
-@socketio.on('connect', namespace='/pi')
+@socketio.on('connect')
 def pi_connect():
     global clients
     sid = request.sid
+    print("Connect on",sid)
     clients[sid] = Client( sid )
-    emit( 'ack',  {'connected':True}, room=sid )
+    clients = {k: v for k, v in sorted(clients.items(), key=lambda item: item[1].name)}
+    print(clients)
+    
+@socketio.on('syn')
+def pi_syn(data):
+    sid = request.sid
+    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
 
-@socketio.on('name')
-def handle_message(data):
+@socketio.on('disconnect')
+def pi_disconnect():
     global clients
     sid = request.sid
+    print("Disconnect on",sid)
+    del clients[sid]
+    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
+
+@socketio.on('name')
+def pi_name(data):
+    global clients
+    sid = request.sid
+    print("Name on",sid)
     clients[sid].name = data['name']
     emit('light',  {'style':'RAINBOW','color1':'#00FF00','color2':'#000000','color3':'#000000'})
 
 def data_change(cmd, sid):
-    socketio.emit( 'light', cmd, room=sid )
+    socketio.emit( 'light', cmd, to=sid)
 
 @app.route("/room/<room_id>", methods=['GET', 'POST'])
 @login_required
@@ -157,7 +160,7 @@ def edit_room( room_id ):
         client.color2 = form.color2.data
         client.color3 = form.color3.data
         client.last_modify_user = current_user.id
-        client.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        client.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
         data_change(cmd, room_id)
