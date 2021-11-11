@@ -7,7 +7,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 COPY . /app/
 
-run python -m flask db upgrade; exit 0
+run python -m flask db upgrade
 
 ENTRYPOINT ["gunicorn", "light:APP"]
 CMD ["--bind=0.0.0.0:8080"]
