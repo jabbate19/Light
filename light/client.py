@@ -5,6 +5,7 @@ class Client:
         self.name = ''
         self.last_modify_time = '00:00:00'
         self.last_modify_user = 'root'
+        self.style = 'SOLID'
         self.color1 = '#B0197E'
         self.color2 = '#E11C52'
         self.color3 = '#B0197E'

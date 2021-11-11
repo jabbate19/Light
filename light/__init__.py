@@ -124,17 +124,30 @@ def update_pi( ip, cmd ):
         print("Pi Send Error:", e)
         s.close()
 
-@socketio.on('connect', namespace='/pi')
+@socketio.on('connect')
 def pi_connect():
     global clients
     sid = request.sid
+    print("Connect on",sid)
     clients[sid] = Client( sid )
+    clients = {k: v for k, v in sorted(clients.items(), key=lambda item: item[1].name)}
+    print(clients)
+    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
+
+@socketio.on('disconnect')
+def pi_disconnect():
+    global clients
+    sid = request.sid
+    print("Disconnect on",sid)
+    del clients[sid]
     emit( 'ack',  {'connected':True,'id':sid}, to=sid )
 
 @socketio.on('name')
-def handle_message(data):
+def pi_name(data):
     global clients
-    clients[data['id']].name = data['name']
+    sid = request.sid
+    print("Name on",sid)
+    clients[sid].name = data['name']
     emit('light',  {'style':'RAINBOW','color1':'#00FF00','color2':'#000000','color3':'#000000'})
 
 def data_change(cmd, sid):
