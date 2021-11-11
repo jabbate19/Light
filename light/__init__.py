@@ -3,7 +3,7 @@
 # Author: Joe Abbate               #
 ####################################
 from subprocess import check_output
-import datetime
+from datetime import datetime
 import os
 import socket
 import pytz
@@ -111,19 +111,6 @@ def index():
     global clients
     return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
 
-def update_pi( ip, cmd ):
-    # Pi notifying socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(1)
-    try:
-        s.connect((ip, 4444))
-        msg = cmd
-        s.send(msg.encode())
-        s.close()
-    except Exception as e:
-        print("Pi Send Error:", e)
-        s.close()
-
 @socketio.on('connect')
 def pi_connect():
     global clients
@@ -173,7 +160,7 @@ def edit_room( room_id ):
         client.color2 = form.color2.data
         client.color3 = form.color3.data
         client.last_modify_user = current_user.id
-        client.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        client.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
         data_change(cmd, room_id)
