@@ -31,7 +31,7 @@ else:
 
 # Establish SQL Database
 db = SQLAlchemy(app)
-migrate = Migrate(app)
+migrate = Migrate(app, db)
 socketio = SocketIO(app)
 
 # OIDC Authentication
