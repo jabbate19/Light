@@ -129,7 +129,7 @@ def pi_connect():
     global clients
     sid = request.sid
     clients[sid] = Client( sid )
-    emit( 'ack',  {'connected':True,'id':sid}, room=sid )
+    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
 
 @socketio.on('name')
 def handle_message(data):
@@ -138,7 +138,7 @@ def handle_message(data):
     emit('light',  {'style':'RAINBOW','color1':'#00FF00','color2':'#000000','color3':'#000000'})
 
 def data_change(cmd, sid):
-    socketio.emit( 'light', cmd, room =sid)
+    socketio.emit( 'light', cmd, to=sid)
 
 @app.route("/room/<room_id>", methods=['GET', 'POST'])
 @login_required
