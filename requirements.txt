@@ -14,3 +14,4 @@ psycopg2-binary
 pymysql
 wtforms==2.3.3
 gunicorn
+eventlet
