@@ -1,10 +1,10 @@
-FROM python:latest
+FROM python:3.8-alpine
 LABEL maintainer="Joseph Abbate <josephabbateny@gmail.com>"
 
-WORKDIR /app
-COPY requirements.txt /app
+WORKDIR /app/
+COPY requirements.txt /app/
 RUN pip install -r requirements.txt
-COPY . /app
+COPY . /app/
 
 run python -m flask db upgrade
 
