@@ -10,4 +10,4 @@ COPY . /app/
 run python -m flask db upgrade; exit 0
 
 ENTRYPOINT ["gunicorn", "light:app"]
-CMD ["--bind=0.0.0.0:8080"]
+CMD ["--bind=0.0.0.0:8080","--worker-class=eventlet"]
