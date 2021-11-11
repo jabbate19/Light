@@ -9,11 +9,15 @@ import socket
 import pytz
 from flask_pyoidc.flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
-from flask import Flask, render_template, send_from_directory, redirect, url_for, g
+from flask import Flask, render_template, send_from_directory, redirect, url_for, g, request
+from flask_migrate import Migrate
+from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
 import time
+from light.Client import Client
+
 
 # Setting up Flask and csrf token for forms.
 app = Flask(__name__)
@@ -27,6 +31,8 @@ else:
 
 # Establish SQL Database
 db = SQLAlchemy(app)
+migrate = Migrate(app)
+socketio = SocketIO(app)
 
 # OIDC Authentication
 CSH_AUTH = ProviderConfiguration(issuer=app.config["OIDC_ISSUER"],
@@ -47,13 +53,15 @@ login_manager.login_view = 'login'
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from light.models import User, Seat, Room
+from light.models import User, Room
 from light.forms import ColorForm
 from .utils import csh_user_auth
 
 # time setup for the server side time
 eastern = pytz.timezone('America/New_York')
 fmt = '%Y-%m-%d %H:%M'
+
+clients = dict()
 
 # Favicon
 @app.route('/favicon.ico')
@@ -100,100 +108,58 @@ def csh_auth(auth_dict=None):
 @app.route('/home')
 @login_required
 def index():
-    rooms = Room.query.all()
-    return render_template('index.html', rooms = rooms )
+    global clients
+    return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
 
-def update_pi( ip ):
+def update_pi( ip, cmd ):
     # Pi notifying socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
         s.connect((ip, 4444))
-        msg = "UPDATE"
+        msg = cmd
         s.send(msg.encode())
         s.close()
     except Exception as e:
         print("Pi Send Error:", e)
         s.close()
 
+@socketio.on('connect', namespace='/pi')
+def pi_connect():
+    global clients
+    sid = request.sid
+    clients[sid] = Client( sid )
+    emit( 'ack',  {'connected':True}, room=sid )
+
+@socketio.on('name')
+def handle_message(data):
+    global clients
+    sid = request.sid
+    clients[sid].name = data['name']
+    emit('light',  {'style':'RAINBOW','color1':'#00FF00','color2':'#000000','color3':'#000000'})
+
+def data_change(cmd, sid):
+    socketio.emit( 'light', cmd, room=sid )
+
 @app.route("/room/<room_id>", methods=['GET', 'POST'])
 @login_required
 def edit_room( room_id ):
+    global clients
     form = ColorForm()
-    room = Room.query.get( room_id )
+    client = clients[room_id]
     if form.validate_on_submit():
         numcolors = form.numcolors.data
         style = form.style.data
         if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
             style += numcolors
-        room.style = style
-        room.color1 = form.color1.data
-        room.color2 = form.color2.data
-        room.color3 = form.color3.data
-        room.last_modify_user = current_user.id
-        room.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
+        client.style = style
+        client.color1 = form.color1.data
+        client.color2 = form.color2.data
+        client.color3 = form.color3.data
+        client.last_modify_user = current_user.id
+        client.last_modify_time = time.strftime("%H:%M:%S", time.localtime() )
         db.session.commit()
-        update_pi( room.pi_ip )
+        cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
+        data_change(cmd, room_id)
         return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
-
-# All below is for the table project, a future addition
-@app.route('/seats')
-@login_required
-def seats():
-    seats = Seat.query.all()
-    seat_users = []
-    for seat in seats:
-        seat_users.append( seat.user )
-    return render_template('seats.html', users = seat_users, num_seats = len(seat_users) )
-
-@app.route("/claim/<position>", methods=['GET', 'POST'])
-@login_required
-def claim(position):
-    seat = Seat.query.get( int(position) )
-    seat.user = current_user.id
-    seat.style = current_user.style
-    seat.numcolors = current_user.numcolors      
-    seat.color1 = current_user.color1
-    seat.color2 = current_user.color2
-    seat.color3 = current_user.color3
-    db.session.commit()
-    update_pi( position )
-    return redirect(url_for('index'))
-
-@app.route("/leave/<position>", methods=['GET', 'POST'])
-@login_required
-def leave(position):
-    seat = Seat.query.get( int(position) )
-    seat.user = None
-    seat.style = None
-    seat.numcolors = None   
-    seat.color1 = None
-    seat.color2 = None
-    seat.color3 = None
-    db.session.commit()
-    update_pi( position )
-    return redirect(url_for('index'))
-
-@app.route("/colorform", methods=['GET', 'POST'])
-@login_required
-def edit_colors():
-    form = ColorForm()
-    if form.validate_on_submit():
-        current_user.style = form.style.data
-        current_user.numcolors = form.numcolors.data
-        current_user.color1 = form.color1.data
-        current_user.color2 = form.color2.data
-        current_user.color3 = form.color3.data
-        seat = Seat.query.filter(Seat.user == current_user.id).first()
-        if seat:
-            seat.style = form.style.data
-            seat.numcolors = form.numcolors.data
-            seat.color1 = form.color1.data
-            seat.color2 = form.color2.data
-            seat.color3 = form.color3.data
-        db.session.commit()
-        if seat:
-            update_pi( str(seat.id) )
-        return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=current_user.style, current_c1=current_user.color1, current_c2=current_user.color2, current_c3=current_user.color3)
+    return render_template('colorform.html', form=form, current_style=client.style, current_c1=client.color1, current_c2=client.color2, current_c3=client.color3)

@@ -1,59 +1,55 @@
+import asyncio
+from flask_socketio import emit
 import board
 import neopixel
-import socket
 import time
-import mysql.connector
 import os
 from zone import Zone
 import config
+import socketio
 
-s = socket.socket()
-s.bind(('',4444))
-s.listen(5)
-s.settimeout(0)
+sio = socketio.AsyncClient()
 
+connected = False
+
+name = 'Development'
 num_leds = 60
 room_id = 0
 
-mydb = mysql.connector.connect(
-  host = config.DB_IP,
-  user = config.DB_USERNAME,
-  password = config.DB_PASSWORD,
-  database = config.DB_DATABASE
-)
-
-mycursor = mydb.cursor()
-
 pixels = neopixel.NeoPixel(board.D18, num_leds, auto_write = False)
 
-room = Zone( pixels, "SOLID", "#000000", "#000000", "#000000" )
+room = Zone( pixels, "PULSE", "#FF0000", "#000000", "#000000" )
 
-def getSQLData():
-  mydb.commit()
-  mycursor.execute( "SELECT * FROM room" )
-  return mycursor.fetchall()
+@sio.on('connect')
+def connect():
+  global connected, name
+  connected = True
+  emit('name', {'name':name})
+  room.reset("RAINBOW","#000000", "#000000", "#000000")
 
-def main():
-  # Init
-  room_data = getSQLData()[room_id]
-  room.reset( room_data[1], room_data[2], room_data[3], room_data[4] )
-  # Listen for updates and run lights
+@sio.on('disconnect')
+def disconnect():
+  global connected
+  connected = False
+  room.reset("PULSE", "#FF0000", "#000000", "#000000")
+
+@sio.on('light')
+def light_change(data):
+  room.reset( data['style'], data['color1'], data['color2'], data['color3'] )
+
+async def light_monitor():
   while True:
-    # Try and find new message, otherwise continue
-    try:
-      c, addr = s.accept()
-      msg = c.recv(1024).decode()
-      c.close()
-    except TimeoutError:
-      msg = "N/A"
-    except socket.error:
-      msg = "N/A"
-    # Update detection
-    if msg == "UPDATE" and addr[0] == config.SERVER_IP:
-      room_data = getSQLData()[room_id]
-      print(room_data)
-      room.reset( room_data[1], room_data[2], room_data[3], room_data[4] )
     room.process_colors()
-    
+
+async def connection_monitor():
+  while True:
+    if not connected:
+      await sio.connect('light.cs.house/pi')
+    else:
+      await sio.wait()
+
+async def main():
+  asyncio.gather( light_monitor(), connection_monitor() )
+      
 if __name__ == "__main__":
-  main()
+  asyncio.run(main())

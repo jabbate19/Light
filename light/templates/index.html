@@ -4,17 +4,17 @@
         <div class="container px-4 py-5" id="available-lights">
             <h2 class="pb-2 borber-bottom">Available Lights</h2>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 py-5">
-                {% for room in rooms %}
+                {% for id in ids %}
                 <div class="col d-flex align-items-start">
                     <svg class="bi text-muted flex-shrink-0 me-3" width="1.75em" height="1.75em">
                         <use xlink:href="#bootstrap">
                         </use>
                     </svg>
                     <div>
-                        <h4 class="fw-bold mb-0">{{room.name}}</h4>
-                        <a class="btn btn-primary btn-sm" href="/room/{{room.id}}" id="room::{{room.id}}"
+                        <h4 class="fw-bold mb-0">{{rooms[id].name}}</h4>
+                        <a class="btn btn-primary btn-sm" href="/room/{{id}}" id="room::{{id}}"
                     type="button">Modify</a>
-                        <p>Last Modified by: {{room.last_modify_user}} at {{room.last_modify_time}}</p>
+                        <p>Last Modified by: {{rooms[id].last_modify_user}} at {{rooms[id].last_modify_time}}</p>
                     </div>
                 </div>
                 {% endfor %}
