@@ -97,8 +97,7 @@ def csh_auth(auth_dict=None):
         q.picture = auth_dict['picture']
         g.user = q # pylint: disable=assigning-non-slot
     else:
-        user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'], "SOLID", "#B0197E",
-            None, None, None, None)
+        user = User(auth_dict['uid'], auth_dict['first'], auth_dict['last'], auth_dict['picture'])
         g.user = user # pylint: disable=assigning-non-slot
         db.session.add(user)
     db.session.commit()
