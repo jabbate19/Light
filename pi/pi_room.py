@@ -44,7 +44,7 @@ def attempt_connection():
   connection = False
   while not connection:
     try:
-      sio.connect('https://light.cs.house')
+      sio.connect('https://joe-light.cs.house')
     except socketio.exceptions.ConnectionError as err:
       print(err)
       time.sleep(3)

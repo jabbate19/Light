@@ -109,7 +109,9 @@ def csh_auth(auth_dict=None):
 @login_required
 def index():
     global clients
-    return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
+    if current_user.id == 'skyz':
+        return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
+    return redirect('https://www.youtube.com/watch?v=a3Z7zEc7AXQ')
 
 @socketio.on('connect')
 def pi_connect():
@@ -148,21 +150,23 @@ def data_change(cmd, sid):
 @login_required
 def edit_room( room_id ):
     global clients
-    form = ColorForm()
-    client = clients[room_id]
-    if form.validate_on_submit():
-        numcolors = form.numcolors.data
-        style = form.style.data
-        if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
-            style += numcolors
-        client.style = style
-        client.color1 = form.color1.data
-        client.color2 = form.color2.data
-        client.color3 = form.color3.data
-        client.last_modify_user = current_user.id
-        client.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-        db.session.commit()
-        cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
-        data_change(cmd, room_id)
-        return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=client.style, current_c1=client.color1, current_c2=client.color2, current_c3=client.color3)
+    if current_user.id == 'skyz':
+        form = ColorForm()
+        client = clients[room_id]
+        if form.validate_on_submit():
+            numcolors = form.numcolors.data
+            style = form.style.data
+            if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
+                style += numcolors
+            client.style = style
+            client.color1 = form.color1.data
+            client.color2 = form.color2.data
+            client.color3 = form.color3.data
+            client.last_modify_user = current_user.id
+            client.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+            db.session.commit()
+            cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
+            data_change(cmd, room_id)
+            return redirect(url_for('index'))
+        return render_template('colorform.html', form=form, current_style=client.style, current_c1=client.color1, current_c2=client.color2, current_c3=client.color3)
+    return redirect('https://www.youtube.com/watch?v=a3Z7zEc7AXQ')
