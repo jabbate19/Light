@@ -16,7 +16,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import login_user, logout_user, login_required, LoginManager, current_user
 import time
-from light.Client import Client
+
 
 
 # Setting up Flask and csrf token for forms.
@@ -53,9 +53,10 @@ login_manager.login_view = 'login'
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from light.models import User, Room
-from light.forms import ColorForm
+from .models import User, Room
+from .forms import ColorForm
 from .utils import csh_user_auth
+from .client import Client
 
 # time setup for the server side time
 eastern = pytz.timezone('America/New_York')
