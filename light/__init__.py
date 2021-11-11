@@ -132,6 +132,10 @@ def pi_connect():
     clients[sid] = Client( sid )
     clients = {k: v for k, v in sorted(clients.items(), key=lambda item: item[1].name)}
     print(clients)
+    
+@socketio.on('syn')
+def pi_syn(data):
+    sid = request.sid
     emit( 'ack',  {'connected':True,'id':sid}, to=sid )
 
 @socketio.on('disconnect')
