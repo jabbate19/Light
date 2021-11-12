@@ -106,6 +106,8 @@ class Zone:
             self._animation = RainbowSparkle(pixels, speed=0.1, num_sparkles=15)
         elif style == "INTRUDER":
             self._animation = Blink(pixels, speed = 0.1, color=(255,0,0))
+        elif style == "OFF":
+            self._animation = Solid(pixels, color=(0,0,0))
         
     def process_colors( self ):
         if self._animation:
