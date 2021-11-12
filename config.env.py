@@ -4,7 +4,7 @@ from os import environ as env
 IP = env.get('IP', '0.0.0.0')
 PORT = env.get('PORT', 8080)
 SERVER_NAME = env.get('SERVER_NAME', 'light.csh.rit.edu')
-PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'https')
+PREFERRED_URL_SCHEME = env.get('PREFERRED_URL_SCHEME', 'https')
 
 # DB Info
 SQLALCHEMY_DATABASE_URI = env.get('SQLALCHEMY_DATABASE_URI')
