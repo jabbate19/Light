@@ -25,15 +25,15 @@ def upgrade():
         sa.Column('picture', sa.String(255), nullable=False)
     )
     op.create_table('room',
-        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('id', sa.String(50), primary_key=True, nullable=False),
+        sa.Column('mac', sa.String(50), nullable=False),
         sa.Column('style', sa.String(50), nullable=False),
         sa.Column('color1', sa.String(50), nullable=False),
         sa.Column('color2', sa.String(50), nullable=False),
         sa.Column('color3', sa.String(50), nullable=False),
         sa.Column('last_modify_user', sa.String(50), nullable=False),
         sa.Column('last_modify_time', sa.String(50), nullable=False),
-        sa.Column('name', sa.String(50), nullable=False),
-        sa.Column('pi_ip', sa.String(50), nullable=False)
+        sa.Column('session_id', sa.String(50), nullable=True)
     )
 
 

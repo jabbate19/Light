@@ -54,15 +54,12 @@ commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').r
 
 # pylint: disable=wrong-import-position
 from .models import User, Room
-from .forms import ColorForm
+from .forms import ColorForm, RoomForm
 from .utils import csh_user_auth
-from .client import Client
 
 # time setup for the server side time
 eastern = pytz.timezone('America/New_York')
 fmt = '%Y-%m-%d %H:%M'
-
-clients = dict()
 
 # Favicon
 @app.route('/favicon.ico')
@@ -108,38 +105,39 @@ def csh_auth(auth_dict=None):
 @app.route('/home')
 @login_required
 def index():
-    global clients
-    return render_template('index.html', rooms = clients, ids = list(clients.keys()) )
+    return render_template('index.html', rooms = active_user_query().all() )
 
 @socketio.on('connect')
 def pi_connect():
-    global clients
     sid = request.sid
     print("Connect on",sid)
-    clients[sid] = Client( sid )
-    clients = {k: v for k, v in sorted(clients.items(), key=lambda item: item[1].name)}
-    print(clients)
     
-@socketio.on('syn')
-def pi_syn(data):
-    sid = request.sid
-    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
-
 @socketio.on('disconnect')
 def pi_disconnect():
-    global clients
     sid = request.sid
     print("Disconnect on",sid)
-    del clients[sid]
-    emit( 'ack',  {'connected':True,'id':sid}, to=sid )
+    room = Room.query.filter(Room.session_id == sid).first()
+    if room:
+        room.session_id = None
+    db.session.commit()
 
-@socketio.on('name')
+@socketio.on('login')
 def pi_name(data):
-    global clients
+    print(data)
     sid = request.sid
-    print("Name on",sid)
-    clients[sid].name = data['name']
-    emit('light',  {'style':'RAINBOW','color1':'#00FF00','color2':'#000000','color3':'#000000'})
+    attempted_room = Room.query.get(data['name'])
+    if attempted_room:
+        if attempted_room.mac == data['pass']:
+            attempted_room.session_id = sid
+            db.session.commit()
+            emit('light',  {'style':attempted_room.style,'color1':attempted_room.color1,'color2':attempted_room.color2,'color3':attempted_room.color3})
+        else:
+            emit('login error', {'data':'Invalid Password'})
+    else:
+        emit('login error', {'data':'Invalid User'})
+    
+def active_user_query(name = None):
+    return Room.query.filter(Room.session_id.isnot(None))
 
 def data_change(cmd, sid):
     socketio.emit( 'light', cmd, to=sid)
@@ -147,22 +145,45 @@ def data_change(cmd, sid):
 @app.route("/room/<room_id>", methods=['GET', 'POST'])
 @login_required
 def edit_room( room_id ):
-    global clients
+    room = Room.query.get(room_id)
+    if not room:
+        return 404
+    if not room.session_id:
+        return 404
     form = ColorForm()
-    client = clients[room_id]
     if form.validate_on_submit():
         numcolors = form.numcolors.data
         style = form.style.data
         if style == "BLINK" or style == "CHASE" or style == "COMET" or style == "PULSE":
             style += numcolors
-        client.style = style
-        client.color1 = form.color1.data
-        client.color2 = form.color2.data
-        client.color3 = form.color3.data
-        client.last_modify_user = current_user.id
-        client.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        room.style = style
+        room.color1 = form.color1.data
+        room.color2 = form.color2.data
+        room.color3 = form.color3.data
+        room.last_modify_user = current_user.id
+        room.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
-        data_change(cmd, room_id)
+        data_change(cmd, room.session_id)
         return redirect(url_for('index'))
-    return render_template('colorform.html', form=form, current_style=client.style, current_c1=client.color1, current_c2=client.color2, current_c3=client.color3)
+    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
+
+@app.route("/add_room", methods=['GET', 'POST'])
+@login_required
+def add_room():
+    form = RoomForm()
+    if form.validate_on_submit():
+        room = Room( form.name.data, form.mac_addr.data )
+        db.session.add(room)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('roomform.html', form=form, name = '', mac_addr = '')
+
+@app.route("/delete_room/<room_id>", methods=['GET'])
+def del_room(room_id):
+    room = Room.query.get(room_id)
+    if not room:
+        return 404
+    db.session.delete(room)
+    db.session.commit()
+    return redirect('/')

@@ -3,6 +3,7 @@
 # Author: Joe Abbate               #
 ####################################
 from light import db
+from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -36,38 +37,30 @@ class User(db.Model):
     def is_anonymous():
         return False
 
-
-class Seat(db.Model):
-    __tablename__ = 'seat'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user = db.Column(db.String, db.ForeignKey('user.id'), nullable=True)
-    style = db.Column(db.String, nullable=True)
-    color1 = db.Column(db.String, nullable=True)
-    color2 = db.Column(db.String, nullable=True)
-    color3 = db.Column(db.String, nullable=True)
-
-    def __init__( self, style, color1, color2, color3 ):
-        self.type = style
-        self.color1 = color1
-        self.color2 = color2
-        self.color3 = color3
-
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
-
 class Room(db.Model):
     __tablename__ = 'room'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    style = db.Column(db.String, nullable=True)
-    color1 = db.Column(db.String, nullable=True)
-    color2 = db.Column(db.String, nullable=True)
-    color3 = db.Column(db.String, nullable=True)
-    last_modify_user = db.Column(db.String, nullable=True)
-    last_modify_time = db.Column(db.String, nullable=True)
-    name = db.Column(db.String, nullable=True)
-    pi_ip = db.Column(db.String, nullable=True)
+    id = db.Column(db.String, primary_key=True, nullable=False)
+    mac = db.Column(db.String, nullable=False)
+    style = db.Column(db.String, nullable=False)
+    color1 = db.Column(db.String, nullable=False)
+    color2 = db.Column(db.String, nullable=False)
+    color3 = db.Column(db.String, nullable=False)
+    last_modify_user = db.Column(db.String, nullable=False)
+    last_modify_time = db.Column(db.String, nullable=False)
+    session_id = db.Column(db.String, nullable=True)
+
+    def __init__( self, id, mac, style='COMET2', color1='#B0197E',color2='#E11C52',color3='#FFFFFF' ):
+        self.id = id
+        self.mac = mac
+        self.style = style
+        self.color1 = color1
+        self.color2 = color2
+        self.color3 = color3
+        self.last_modify_user = 'root'
+        self.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        self.session_id = None
+
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

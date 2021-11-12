@@ -7,6 +7,7 @@ from zone import Zone
 import config
 import socketio
 import argparse
+from getmac import get_mac_address as gma
 
 sio = socketio.Client()
 
@@ -25,12 +26,13 @@ room = Zone( pixels, "PULSE", "#FF0000", "#000000", "#000000" )
 
 @sio.on('connect')
 def conn():
-  sio.emit('syn',{'connected':True})
-  room.reset("RAINBOW","#000000", "#000000", "#000000")
+  mac_pass = gma()
+  sio.emit('login',{'name':name,'pass':mac_pass})
 
-@sio.on('ack')
-def ack(data):
-  sio.emit('name',{'id':data['id'],'name':name})
+@sio.on('login_error')
+def err(data):
+  print('Login Error:',data['data'])
+  sio.disconnect()
 
 @sio.on('disconnect')
 def disconn():

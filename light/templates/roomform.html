@@ -1,0 +1,24 @@
+{% extends "layout.html" %} {% block content %}
+<div class="jumbotron">
+  <div class="bs-component">
+    <h1 class="display-4 mt-4">Add New Device</h1>
+      <hr class="my-4">
+      <div class="container">
+        <form action="" method="post">
+          <fieldset>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group row", id="name">
+              <h5><label class="col col-form-label" for="color_type">Device Name/ID</label></h5> <div class="col">{{ form.name(class="col col-form-label", value=name) }}</div>
+              {% for error in form.name.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            <div class="form-group row" id="mac">
+              <h5><label class="col col-form-label" for="num_colors">MAC Address</label></h5> <div class="col">{{ form.mac_addr(class="col col-form-label", value=mac_addr) }}</div>
+              {% for error in form.mac_addr.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            </div>
+          {{ form.submit( class="btn btn-primary btn-sm btn-block")}}
+          </fieldset>
+      </div>
+  </div>
+</div>
+{% endblock %}
