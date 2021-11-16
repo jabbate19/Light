@@ -9,7 +9,7 @@ import socket
 import pytz
 from flask_pyoidc.flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
-from flask import Flask, render_template, send_from_directory, redirect, url_for, g, request
+from flask import Flask, render_template, send_from_directory, redirect, url_for, g, request, abort
 from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
@@ -47,7 +47,7 @@ auth.init_app(app)
 # Flask-Login Manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'csh_auth'
 
 # Commit
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
@@ -99,7 +99,7 @@ def csh_auth(auth_dict=None):
         db.session.add(user)
     db.session.commit()
     login_user(g.user)
-    return redirect(url_for('index'))
+    return redirect('/home')
 
 # Application
 @app.route('/home')
@@ -110,12 +110,10 @@ def index():
 @socketio.on('connect')
 def pi_connect():
     sid = request.sid
-    print("Connect on",sid)
     
 @socketio.on('disconnect')
 def pi_disconnect():
     sid = request.sid
-    print("Disconnect on",sid)
     room = Room.query.filter(Room.session_id == sid).first()
     if room:
         room.session_id = None
@@ -140,16 +138,16 @@ def active_user_query():
     return Room.query.filter(Room.session_id.isnot(None))
 
 def data_change(cmd, sid):
-    socketio.emit( 'light', cmd, to=sid)
+    socketio.emit('light', cmd, to=sid)
 
 @app.route("/room/<room_id>", methods=['GET', 'POST'])
 @login_required
 def edit_room( room_id ):
     room = Room.query.get(room_id)
     if not room:
-        return 404
+        abort(404)
     if not room.session_id:
-        return 404
+        abort(404)
     form = ColorForm()
     if form.validate_on_submit():
         numcolors = form.numcolors.data
@@ -165,7 +163,7 @@ def edit_room( room_id ):
         db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
         data_change(cmd, room.session_id)
-        return redirect(url_for('index'))
+        return redirect('/home')
     return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
 
 @app.route("/add_room", methods=['GET', 'POST'])
@@ -176,7 +174,7 @@ def add_room():
         room = Room( form.name.data, form.pswd.data )
         db.session.add(room)
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect('/home')
     return render_template('roomform.html', form=form, name = '', pswd = '')
 
 @app.route("/delete_room/<room_id>", methods=['GET'])
