@@ -6,6 +6,7 @@ COPY ./website/requirements.txt /app/
 RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 COPY ./website /app/
+COPY ./.git /app/
 
 run python -m flask db upgrade; exit 0
 
