@@ -128,12 +128,9 @@ def pi_name(data):
     attempted_room = Room.query.get(data['name'])
     if attempted_room:
         if attempted_room.pswd == data['pass']:
-            if attempted_room.session_id:
-                emit('login error', {'data':'Device Already Connected Under This Login'})
-            else:
-                attempted_room.session_id = sid
-                db.session.commit()
-                emit('light',  {'style':attempted_room.style,'color1':attempted_room.color1,'color2':attempted_room.color2,'color3':attempted_room.color3})
+            attempted_room.session_id = sid
+            db.session.commit()
+            emit('light',  {'style':attempted_room.style,'color1':attempted_room.color1,'color2':attempted_room.color2,'color3':attempted_room.color3})
         else:
             emit('login error', {'data':'Invalid Password'})
     else:
