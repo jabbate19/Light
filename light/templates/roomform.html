@@ -12,8 +12,8 @@
               {% for error in form.name.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
             </div>
             <div class="form-group row" id="mac">
-              <h5><label class="col col-form-label" for="num_colors">MAC Address</label></h5> <div class="col">{{ form.mac_addr(class="col col-form-label", value=mac_addr) }}</div>
-              {% for error in form.mac_addr.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+              <h5><label class="col col-form-label" for="num_colors">MAC Address</label></h5> <div class="col">{{ form.pswd(class="col col-form-label", value=pswd) }}</div>
+              {% for error in form.pswd %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
             </div>
             </div>
           {{ form.submit( class="btn btn-primary btn-sm btn-block")}}

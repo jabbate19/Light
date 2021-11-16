@@ -41,7 +41,7 @@ class Room(db.Model):
     __tablename__ = 'room'
 
     id = db.Column(db.String, primary_key=True, nullable=False)
-    mac = db.Column(db.String, nullable=False)
+    pswd = db.Column(db.String, nullable=False)
     style = db.Column(db.String, nullable=False)
     color1 = db.Column(db.String, nullable=False)
     color2 = db.Column(db.String, nullable=False)
@@ -50,9 +50,9 @@ class Room(db.Model):
     last_modify_time = db.Column(db.String, nullable=False)
     session_id = db.Column(db.String, nullable=True)
 
-    def __init__( self, id, mac, style='COMET2', color1='#B0197E',color2='#E11C52',color3='#FFFFFF' ):
+    def __init__( self, id, pswd, style='COMET2', color1='#B0197E',color2='#E11C52',color3='#FFFFFF' ):
         self.id = id
-        self.mac = mac
+        self.pswd = pswd
         self.style = style
         self.color1 = color1
         self.color2 = color2

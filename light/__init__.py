@@ -127,7 +127,7 @@ def pi_name(data):
     sid = request.sid
     attempted_room = Room.query.get(data['name'])
     if attempted_room:
-        if attempted_room.mac == data['pass']:
+        if attempted_room.pswd == data['pass']:
             if attempted_room.session_id:
                 emit('login error', {'data':'Device Already Connected Under This Login'})
             else:
@@ -139,7 +139,7 @@ def pi_name(data):
     else:
         emit('login error', {'data':'Invalid User'})
     
-def active_user_query(name = None):
+def active_user_query():
     return Room.query.filter(Room.session_id.isnot(None))
 
 def data_change(cmd, sid):
@@ -176,11 +176,11 @@ def edit_room( room_id ):
 def add_room():
     form = RoomForm()
     if form.validate_on_submit():
-        room = Room( form.name.data, form.mac_addr.data )
+        room = Room( form.name.data, form.pswd )
         db.session.add(room)
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('roomform.html', form=form, name = '', mac_addr = '')
+    return render_template('roomform.html', form=form, name = '', pswd = '')
 
 @app.route("/delete_room/<room_id>", methods=['GET'])
 def del_room(room_id):
