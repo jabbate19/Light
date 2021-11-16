@@ -13,7 +13,7 @@
             </div>
             <div class="form-group row" id="mac">
               <h5><label class="col col-form-label" for="num_colors">MAC Address</label></h5> <div class="col">{{ form.pswd(class="col col-form-label", value=pswd) }}</div>
-              {% for error in form.pswd %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+              {% for error in form.pswd.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
             </div>
             </div>
           {{ form.submit( class="btn btn-primary btn-sm btn-block")}}
