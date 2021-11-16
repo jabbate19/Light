@@ -176,7 +176,7 @@ def edit_room( room_id ):
 def add_room():
     form = RoomForm()
     if form.validate_on_submit():
-        room = Room( form.name.data, form.pswd )
+        room = Room( form.name.data, form.pswd.data )
         db.session.add(room)
         db.session.commit()
         return redirect(url_for('index'))
