@@ -53,7 +53,7 @@ login_manager.login_view = 'csh_auth'
 commit = check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').rstrip()
 
 # pylint: disable=wrong-import-position
-from .models import User, Room
+from .models import User, Room, Log
 from .forms import ColorForm, RoomForm
 from .utils import csh_user_auth
 
@@ -160,9 +160,11 @@ def edit_room( room_id ):
         room.color3 = form.color3.data
         room.last_modify_user = current_user.id
         room.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-        db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
         data_change(cmd, room.session_id)
+        log = Log(room)
+        db.session.add(log)
+        db.session.commit()
         return redirect('/home')
     return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3)
 
