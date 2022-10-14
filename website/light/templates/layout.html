@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<title>LightTable</title>
+<title>MyLight</title>
 
 <head>
   {% block head %}
   <meta charset="UTF-8">
   <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-  <meta name="description" content="Light Table for CSH">
+  <meta name="description" content="Web-Controlled LEDs for CSH">
   <meta name="author" content="Joseph Abbate">
   <meta name="viewport" content="width=device-width" , initial-scale="1">
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"
@@ -34,17 +34,21 @@
 <body class="" style="">
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
   <div class="container">
-    <a class="navbar-brand abs" href="/">Light Table</a>
+    <a class="navbar-brand abs" href="/">MyLight</a>
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
             data-target="#navbarResponsive">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarResponsive">
-      {% if current_user.is_authenticated %}
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item navbar-user dropdown">
-          <a class="nav-link" href="/history">History</a>
-        </li>
+      <ul class="nav navbar-nav mr-auto">
+        {% if current_user.admin %}
+          <li class="nav-item navbar-user dropdown">
+            <a class="nav-link" href="/add_room">
+              <i class="fas fa-th-list"></i>
+              Add Room
+            </a>
+          </li>
+        {% endif %}
       </ul>
       <ul class="nav navbar-nav ml-auto">
         <li class="nav-item navbar-user dropdown">
@@ -55,13 +59,10 @@
           <div class="dropdown-menu" aria-labelledby="user01">
             <!-- <div class="dropdown-divider"></div> -->
             <a class="dropdown-item" href="/logout">Logout</a>
-          </div>
+          </div>  
         </li>
-        {% endif %}
-        {% if current_user.is_authenticated %}
         <!--<form method="get" action="https://github.com/jabbate19/LightTable"><button class="btn btn-secondary my-2 my-sm-0" type="submit">-->
         <!--&lt;!&ndash;Log In </button></form>&ndash;&gt;-->
-        {% endif %}
       </ul>
     </div>
   </div>
@@ -73,7 +74,7 @@
 </div>
 <footer class="py-10 bg-light">
   <div class="container">
-    <p class="m-0 text-center text-black"><a class="text-black" href="https://github.com/jabbate19/LightTable">LightTable
+    <p class="m-0 text-center text-black"><a class="text-black" href="https://github.com/jabbate19/Light">MyLight
       ({{commit}})</a></p>
   </div>
 </footer>

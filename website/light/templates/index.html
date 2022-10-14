@@ -1,0 +1,82 @@
+{% extends "layout.html" %} {% block content %}
+<div class="jumbotron">
+  <script type="text/javascript">
+        function del(id){
+            // Get the modal
+            var modal = document.getElementById(`delete_${id}`);
+            modal.style.display = "block";
+        }
+        function delClose(id){
+            // Get the modal
+            var modal = document.getElementById(`delete_${id}`);
+            modal.style.display = "none";
+        }
+  </script>
+  <div class="bs-component">
+    <div class="container px-4 py-5" id="available-lights">
+      <h2 class="pb-2 borber-bottom">Available Lights</h2>
+      <div class="card-deck">
+      {% for room in rooms %}
+        {% if loop.index0 % 3 == 0 %}
+      </div>
+      <br>
+      <div class="card-deck">
+        {% endif %}
+        <div class="card" style="width: 18rem;">
+          <div class="card-body">
+            <h4 class="card-title">{{room.id}}</h4> 
+            <h5 class="card-text">Last Modified by: {{room.last_modify_user}} at {{room.last_modify_time}}</p>
+            <div class="btn-group" role="group">
+              {% if room.lock and not current_user.admin %}
+                <button class="btn btn-dark btn-sm" id="locked::{{room.id}}">LOCKED</button>
+              {% else %}
+                <form action="/room/{{room.id}}" method="get">
+                  <button class="btn btn-primary btn-sm" id="room::{{room.id}}">Modify</button>
+                </form>
+              {% endif %}
+              {% if current_user.admin %}
+                {% if room.lock %}
+                  <form action="/unlock/{{room.id}}" method="post">
+                    <button class="btn btn-light btn-sm" name="unlock" value="{{room.id}}" id="unlock::{{room.id}}">Unlock</button>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  </form>
+                {% else %}
+                  <form action="/lock/{{room.id}}" method="post">
+                    <button class="btn btn-dark btn-sm" name="lock" value="{{room.id}}" id="lock::{{room.id}}">Lock</button>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  </form>
+                {% endif %}
+                <button type="button" class="btn btn-danger btn-sm float-right" onclick='del("{{room.id}}")' id="delete_button_{{room.id}}">Delete</button>
+                <div class="modal" id="delete_{{room.id}}">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title">Delete Room</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                              aria-hidden="true">&times;</span>
+                          </button>
+                      </div>
+                      <div class="modal-body">
+                          <p>Are you sure you want to delete this room??</p>
+                      </div>
+                      <div class="modal-footer">
+                        <form action="/delete_room/{{room.id}}" method="post">
+                          <button class="btn btn-danger btn-sm" name="delete_room" value="{{room.id}}" id="room::{{room.id}}">Delete</button>
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        </form>
+                        <button type="button" class="btn btn-success" onclick='delClose("{{room.id}}")' id="room_close_{{room.id}}">No</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

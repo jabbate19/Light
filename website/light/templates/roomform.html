@@ -1,0 +1,31 @@
+{% extends "layout.html" %} {% block content %}
+<div class="jumbotron">
+  <div class="bs-component">
+    <h1 class="display-4 mt-4">Add New Device</h1>
+      <hr class="my-4">
+      <div class="container">
+        <form action="" method="post">
+          <fieldset>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group row", id="name">
+              <h5><label class="col col-form-label" for="name">Device Name/ID</label></h5>
+              <div class="col">{{ form.name(class="col col-form-label", value=name) }}</div>
+              {% for error in form.name.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            <div class="form-group row" id="pswd">
+              <h5><label class="col col-form-label" for="pswd">Pi Serial Number</label></h5>
+              <div class="col">{{ form.pswd(class="col col-form-label", value=pswd) }}</div>
+              {% for error in form.pswd.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+            <div class="form-group row" id="whitelist">
+              <h5><label class="col col-form-label" for="whitelist">Whitelist (Leave Blank for all members, Separate by ;)</label></h5>
+              <div class="col">{{ form.whitelist(class="col col-form-label", value=whitelist) }}</div>
+              {% for error in form.whitelist.errors %} <div class="alert alert-danger">{{ error }}</div> {% endfor %}
+            </div>
+          {{ form.submit(class="btn btn-primary btn-sm btn-block")}}
+          </fieldset>
+        </form>
+      </div>
+  </div>
+</div>
+{% endblock %}
