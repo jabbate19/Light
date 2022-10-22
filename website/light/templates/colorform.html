@@ -21,7 +21,31 @@
               <p> {{ form.color2(value=current_c2) }} Pick a color here 2</p>
               <p> {{ form.color3(value=current_c3) }} Pick a color here 3</p>
             </div>
-          {{ form.submit( class="btn btn-primary btn-sm btn-block")}}
+          {% if time_diff < 30 %}
+            <button id="submit-btn" class="btn btn-primary btn-sm btn-block" disabled>Timed out for {{ 30 - time_diff }} seconds</button>
+            <script>
+              let time_left = {{ 30 - time_diff }};
+
+              update_countdown(time_left);
+
+              async function update_countdown(seconds) {
+                let submitButton = document.getElementById('submit-btn');
+                await new Promise(r => setTimeout(r, 500));  // Fake a delay to hide roundoff
+                while (seconds > 0) {
+                  submitButton.textContent = `Timed out for ${seconds} seconds`;
+                  seconds--;
+                  await new Promise(r => setTimeout(r, 1000));
+                }
+
+                submitButton.textContent = 'Loading...'
+                await new Promise(r => setTimeout(r, 500));  // Just to make sure we don't reload too early due to rounding
+                location.reload();
+
+              }
+            </script>
+          {% else %}
+            {{ form.submit( class="btn btn-primary btn-sm btn-block")}}
+          {% endif %}
           </fieldset>
       </div>
   </div>

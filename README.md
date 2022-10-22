@@ -12,6 +12,10 @@ The `./website` directory holds all code pertaining to the Flask website. `./pi`
 
 This guide should cover installing python then you need to make sure you have pip installed.
 
+### Requirements
+
+This project requires Python 3.7 or higher
+
 ### Recommended setup
 
 From inside your repository directory run

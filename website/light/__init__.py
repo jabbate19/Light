@@ -172,11 +172,13 @@ def edit_room( room_id ):
         room.color3 = form.color3.data
         room.last_modify_user = current_user.id
         room.last_modify_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        room.last_modify_datetime = datetime.now()
         db.session.commit()
         cmd = { 'style':style,'color1':form.color1.data,'color2':form.color2.data,'color3':form.color3.data }
         data_change(cmd, room.session_id)
         return redirect('/home')
-    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3, commit=commit)
+    time_diff = datetime.now() - datetime.strptime(room.last_modify_time, "%m/%d/%Y %H:%M:%S")
+    return render_template('colorform.html', form=form, current_style=room.style, current_c1=room.color1, current_c2=room.color2, current_c3=room.color3, time_diff=int(time_diff.total_seconds()), commit=commit)
 
 @app.route("/add_room", methods=['GET', 'POST'])
 @login_required
